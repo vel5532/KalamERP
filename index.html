@@ -1218,18 +1218,6 @@ function validateLicense(){
   return status;
 }
 
-/* ── Generate a new license key (seller utility) ───────────────
-   Call generateKey('PRO', 2025) in browser console to create keys */
-window.generateKey = function(plan, year){
-  if(!PLANS[plan.toUpperCase()]) return 'Invalid plan. Use: TRIAL, BASIC, PRO, ENTERPRISE';
-  plan = plan.toUpperCase();
-  const hash = ([...plan+year].reduce((s,c)=>s+c.charCodeAt(0),0) % 1000 * 7 + 13).toString(16).toUpperCase().padStart(4,'0');
-  return `${plan}-${year}-${hash}`;
-};
-
-/* ── Expose ─────────────────────────────────────────────────────*/
-window.__VALIDATE_LICENSE__ = validateLicense;
-window.__PLANS__ = PLANS;
 
 })();
 
@@ -2110,8 +2098,7 @@ function applyConfig(){
    LICENSE UI
 ═══════════════════════════════════════════════════ */
 function initLicenseUI(){
-  const lic = window.__VALIDATE_LICENSE__ ? window.__VALIDATE_LICENSE__() : { valid:true, trialMode:true, daysLeft:30, planName:'Trial', expired:false };
-  window.__LICENSE__ = lic;
+  const lic = { valid: true };
 
   // Show banner if trial or expiring soon
   const banner = document.getElementById('license-banner');
@@ -2203,13 +2190,19 @@ function activateLicense(){
   if(!key){ if(msgEl) msgEl.innerHTML = '<span style="color:#E24B4A">Please enter a license key</span>'; return; }
   // Update config and re-validate
   if(window.__ERP_CONFIG__) window.__ERP_CONFIG__.LICENSE_KEY = key;
-  const lic = window.__VALIDATE_LICENSE__ ? window.__VALIDATE_LICENSE__() : null;
-  if(!lic || !lic.valid){
-    if(msgEl) msgEl.innerHTML = '<span style="color:#E24B4A">❌ Invalid key. Contact support if you believe this is an error.</span>';
-  } else {
-    if(msgEl) msgEl.innerHTML = `<span style="color:#1D9E75">✅ License activated! Plan: ${lic.planName} · ${lic.daysLeft} days remaining</span>`;
-    setTimeout(()=>{ closeUpgradeModal(); location.reload(); }, 1500);
-  }
+ const result = await verifyLicense(key);
+  if (result.status === "INVALID") {
+  msgEl.innerHTML = "❌ Invalid License Key";
+}
+else if (result.status === "EXPIRED") {
+  msgEl.innerHTML = "⛔ License Expired";
+}
+else if (result.status === "USED") {
+  msgEl.innerHTML = "⚠️ License Already Used";
+}
+else if (result.status === "OK") {
+  msgEl.innerHTML = "✅ Activated: " + result.plan;
+}
 }
 
 /* ── Feature gate helper ─────────────────────────────────────── */
@@ -2267,6 +2260,8 @@ import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/fi
 
 // 🔐 VERIFY LICENSE FROM FIREBASE
 async function verifyLicense(key) {
+  console.log("INPUT KEY:", key);   // ✅ ADD THIS
+
   const ref = doc(db, "licenses", key);
   const snap = await getDoc(ref);
 
