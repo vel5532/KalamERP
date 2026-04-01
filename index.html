@@ -2300,8 +2300,8 @@ async function verifyLicense(key) {
 // 🔘 CONNECT TO YOUR BUTTON
 <script>
 window.activateLicense = async function () {
-  const result = await verifyLicense(key);
-  const input = document.getElementById("license-key");
+  
+  const input = document.getElementById("license-key-input");
   const msgEl = document.getElementById("license-activate-msg");
   // 🔥 SAFETY CHECK
   if (!input) {
@@ -2312,7 +2312,7 @@ window.activateLicense = async function () {
     alert("MESSAGE ELEMENT NOT FOUND ❌");
     return;
   }
-  const key = input.value.trim();
+  const key = input.value.trim().toUpperCase();
   if (!key) {
     msgEl.innerHTML = "⚠️ Please enter license key";
     return;
