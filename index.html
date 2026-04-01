@@ -2298,13 +2298,26 @@ async function verifyLicense(key) {
 }
 
 // 🔘 CONNECT TO YOUR BUTTON
+<script>
 window.activateLicense = async function () {
-alert("clicked"); // DEBUG
-  const key = document.getElementById("licenseKey").value;
-  const msgEl = document.getElementById("license-activate-msg"); // message element
-
   const result = await verifyLicense(key);
-
+  const input = document.getElementById("license-key");
+  const msgEl = document.getElementById("license-activate-msg");
+  // 🔥 SAFETY CHECK
+  if (!input) {
+    alert("INPUT NOT FOUND ❌");
+    return;
+  }
+  if (!msgEl) {
+    alert("MESSAGE ELEMENT NOT FOUND ❌");
+    return;
+  }
+  const key = input.value.trim();
+  if (!key) {
+    msgEl.innerHTML = "⚠️ Please enter license key";
+    return;
+  }
+  const result = await verifyLicense(key);
   if (result.status === "INVALID") {
     msgEl.innerHTML = "❌ Invalid License Key";
   } 
@@ -2318,7 +2331,6 @@ alert("clicked"); // DEBUG
     msgEl.innerHTML = "✅ Activated: " + result.plan;
   }
 };
-
 </script>
 </body>
 </html>
