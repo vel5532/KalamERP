@@ -2184,7 +2184,7 @@ function renderPlansGrid(){
   }).join('');
 }
 
-function activateLicense(){
+async function activateLicense(){
   const key = (document.getElementById('license-key-input')?.value || '').trim().toUpperCase();
   const msgEl = document.getElementById('license-activate-msg');
   if(!key){ if(msgEl) msgEl.innerHTML = '<span style="color:#E24B4A">Please enter a license key</span>'; return; }
@@ -2237,82 +2237,33 @@ if(document.readyState === 'loading'){
 </script>
 <script type="module">
 
-// 🔥 FIREBASE IMPORTS
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-
-// 🔥 YOUR FIREBASE CONFIG (PASTE YOUR REAL ONE)
-  const firebaseConfig = {
-    apiKey: "AIzaSyAMAzbuooRoNgm66CcWtDs-XHLL3b4ySI0",
-    authDomain: "kalamerp-3e8bd.firebaseapp.com",
-    projectId: "kalamerp-3e8bd",
-    storageBucket: "kalamerp-3e8bd.firebasestorage.app",
-    messagingSenderId: "525966654326",
-    appId: "1:525966654326:web:a553849ee2c858fb559857",
-    measurementId: "G-HLZLKGY0PZ"
-};
-
-// 🔥 INIT
- const app = initializeApp(firebaseConfig);
- const db = getFirestore(app);
-
-
-// 🔐 VERIFY LICENSE FROM FIREBASE
-async function verifyLicense(key) {
-  console.log("INPUT KEY:", key);   // ✅ ADD THIS
-
-  const ref = doc(db, "licenses", key);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    return { status: "INVALID" };
-  }
-
-  const data = snap.data();
-
-  // ⛔ Expiry check
-  const today = new Date();
-  const expiry = new Date(data.expiry);
-
-  if (today > expiry) {
-    return { status: "EXPIRED" };
-  }
-
-  // ⚠️ Already used
-  if (data.status !== "ACTIVE") {
-    return { status: "USED" };
-  }
-
-  // ✅ Mark as used (anti-sharing)
-  await updateDoc(ref, {
-    status: "USED"
-  });
-
-  return { status: "OK", plan: data.plan };
-}
-
-// 🔘 CONNECT TO YOUR BUTTON
-<script>
+// CONNECT BUTTON
 window.activateLicense = async function () {
-  
+
   const input = document.getElementById("license-key-input");
   const msgEl = document.getElementById("license-activate-msg");
-  // 🔥 SAFETY CHECK
+
+  // SAFETY CHECK
   if (!input) {
     alert("INPUT NOT FOUND ❌");
     return;
   }
+
   if (!msgEl) {
     alert("MESSAGE ELEMENT NOT FOUND ❌");
     return;
   }
+
   const key = input.value.replace(/\s/g, "").trim().toUpperCase();
+
   if (!key) {
     msgEl.innerHTML = "⚠️ Please enter license key";
     return;
   }
+
+  // ✅ NOW await works because inside async function
   const result = await verifyLicense(key);
+
   if (result.status === "INVALID") {
     msgEl.innerHTML = "❌ Invalid License Key";
   } 
@@ -2325,7 +2276,9 @@ window.activateLicense = async function () {
   else {
     msgEl.innerHTML = "✅ Activated: " + result.plan;
   }
+
 };
+
 </script>
 </body>
 </html>
